@@ -1,0 +1,74 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:postgresql://postgres:5432/payment_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: payment-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.example.common.dto"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: "com.example.common.dto.OrderDTO"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+kafka:
+  topics:
+    order-created: order-created
+    payment-success: payment-success
+    payment-failed: payment-failed
+    inventory-failed: inventory-failed
+    delivery-result: delivery-result
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+gateway:
+  url: ${GATEWAY_URL:http://gateway-service:8080}
+
+api:
+  auth: ${gateway.url}/api/auth
+  users: ${gateway.url}/api/users
+  inventory: ${gateway.url}/api/inventory
+  order: ${gateway.url}/api/orders
+  payment: ${gateway.url}/api/payments
+  delivery: ${gateway.url}/api/delivery
+  balance: ${gateway.url}/api/balances
+
+app:
+  order-service:
+    url: ${gateway.url}
+
+jwt:
+  secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
+  expiration: 3600000 # 1 hour

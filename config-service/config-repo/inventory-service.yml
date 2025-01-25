@@ -1,0 +1,77 @@
+server:
+  port: 8084
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/inventory_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  kafka:
+    bootstrap-servers: kafka:9092
+  cache:
+    type: redis
+  redis:
+    host: redis
+    port: 6379
+    timeout: 60000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+resilience4j:
+  ratelimiter:
+    instances:
+      default:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 3s
+
+jwt:
+  secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
+  expiration: 3600000 # 1 hour
+
+kafka:
+  topics:
+    payment-success: payment-success
+    payment-failed: payment-failed
+    inventory-reserved: inventory-reserved
+    inventory-failed: inventory-failed
+    delivery-result: delivery-result
+
+gateway:
+  url: ${GATEWAY_URL:http://gateway-service:8080}
+
+api:
+  auth: ${gateway.url}/api/auth
+  users: ${gateway.url}/api/users
+  inventory: ${gateway.url}/api/inventory
+  order: ${gateway.url}/api/orders
+  payment: ${gateway.url}/api/payments
+  delivery: ${gateway.url}/api/delivery
+  balance: ${gateway.url}/api/balances
+
+app:
+  order-service:
+    url: ${gateway.url}

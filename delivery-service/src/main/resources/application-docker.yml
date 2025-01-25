@@ -1,0 +1,20 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: delivery-service
+  config:
+    import: "configserver:http://config-service:8888"
+  cloud:
+    config:
+      uri: http://config-service:8888
+      fail-fast: true
+      username: config-server
+      password: ${CONFIG_SERVER_PASSWORD:configpassword}
+
+logging:
+  level:
+    root: INFO
+    com.example.delivery: INFO
+    org.springframework: INFO

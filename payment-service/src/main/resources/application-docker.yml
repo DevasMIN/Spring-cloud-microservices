@@ -1,0 +1,17 @@
+spring:
+  config:
+    import: configserver:http://config-service:8888
+  cloud:
+    config:
+      fail-fast: true
+      username: config-server
+      password: ${CONFIG_SERVER_PASSWORD:configpassword}
+  datasource:
+    url: jdbc:postgresql://postgres:5432/payment_db
+  kafka:
+    bootstrap-servers: kafka:9092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/

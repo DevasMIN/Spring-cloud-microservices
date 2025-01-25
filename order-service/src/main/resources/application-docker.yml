@@ -1,0 +1,26 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: order-service
+  config:
+    import: "configserver:http://config-service:8888"
+  cloud:
+    config:
+      fail-fast: true
+      username: config-server
+      password: ${CONFIG_SERVER_PASSWORD:configpassword}
+      retry:
+        initial-interval: 2000
+        max-interval: 10000
+        multiplier: 2
+        max-attempts: 10
+
+logging:
+  level:
+    root: INFO
+    com.example.order: INFO
+    org.springframework: INFO
+    org.springframework.security: INFO
+    org.springframework.web: INFO

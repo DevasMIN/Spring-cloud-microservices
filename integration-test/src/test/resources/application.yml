@@ -1,0 +1,28 @@
+spring:
+  profiles:
+    active: test
+  application:
+    name: integration-tests
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web.client.RestTemplate: DEBUG
+
+# Gateway URL для всех сервисов
+gateway:
+  url: http://localhost:8080
+
+# Endpoints через API Gateway
+api:
+  auth: ${gateway.url}/api/auth
+  users: ${gateway.url}/api/users
+  inventory: ${gateway.url}/api/inventory
+  order: ${gateway.url}/api/orders
+  payment: ${gateway.url}/api/payments
+  delivery: ${gateway.url}/api/delivery
+  balance: ${gateway.url}/api/balances
+
+app:
+  order-service:
+    url: ${api.order}
