@@ -39,7 +39,8 @@ public class OrderProcessingListener {
                     orderDTO.setStatus(OrderStatus.INVENTORY_DONE);
                     orderServiceClient.updateOrderStatus(
                         orderDTO.getId(),
-                        OrderStatus.INVENTORY_DONE
+                        OrderStatus.INVENTORY_DONE,
+                "Inventory reserved successfully"
                     );
                     log.info("Inventory reserved successfully for order: {}, proceeding to delivery", orderDTO.getId());
                     kafkaTemplate.send(inventoryReservedTopic, orderDTO.getId().toString(), orderDTO);
@@ -47,7 +48,8 @@ public class OrderProcessingListener {
                     orderDTO.setStatus(OrderStatus.INVENTORY_FAILED);
                     orderServiceClient.updateOrderStatus(
                         orderDTO.getId(),
-                        OrderStatus.INVENTORY_FAILED
+                        OrderStatus.INVENTORY_FAILED,
+                        "Inventory reservation failed"
                     );
                     log.error("Inventory reservation failed for order: {} - insufficient stock", orderDTO.getId());
                     kafkaTemplate.send(inventoryFailedTopic, orderDTO.getId().toString(), orderDTO);
@@ -56,11 +58,16 @@ public class OrderProcessingListener {
                 log.warn("Order {} is not in PAID status. Current status: {}", orderDTO.getId(), orderDTO.getStatus());
             }
         } catch (Exception e) {
-            log.error("Error processing inventory for order: {}. Error: {}", orderDTO.getId(), e.getMessage(), e);
+            String errorMessage = String.format("Error processing inventory for order: %s. Error: %s",
+                    orderDTO.getId(),
+                    e.getMessage());
+
+            log.error(errorMessage);
             orderDTO.setStatus(OrderStatus.UNEXPECTED_FAILURE);
             orderServiceClient.updateOrderStatus(
                 orderDTO.getId(),
-                OrderStatus.UNEXPECTED_FAILURE
+                OrderStatus.UNEXPECTED_FAILURE,
+                    errorMessage
             );
             kafkaTemplate.send(inventoryFailedTopic, orderDTO.getId().toString(), orderDTO);
         }
@@ -71,18 +78,11 @@ public class OrderProcessingListener {
         log.info("Received rollback request for order: {}", orderDTO.getId());
         
         try {
-            if (orderDTO.getStatus() == OrderStatus.INVENTORY_DONE ||
-                orderDTO.getStatus() == OrderStatus.DELIVERY_FAILED) {
+            if (orderDTO.getStatus() == OrderStatus.DELIVERY_FAILED) {
                 
                 inventoryService.restoreInventory(orderDTO);
                 log.info("Inventory restored for order: {}", orderDTO.getId());
-                
-                if (orderDTO.getStatus() == OrderStatus.DELIVERY_FAILED) {
-                    orderServiceClient.updateOrderStatus(
-                        orderDTO.getId(),
-                        OrderStatus.DELIVERY_FAILED
-                    );
-                }
+
             }
         } catch (Exception e) {
             log.error("Error processing inventory restore for order: {}", orderDTO.getId(), e);

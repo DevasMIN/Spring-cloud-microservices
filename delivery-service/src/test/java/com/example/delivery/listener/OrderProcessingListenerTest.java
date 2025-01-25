@@ -42,7 +42,7 @@ class OrderProcessingListenerTest {
 
         verify(deliveryService, times(1)).processDelivery(orderDTO);
         verify(orderServiceClient, times(1))
-                .updateOrderStatus(orderDTO.getId(), OrderStatus.DELIVERED);
+                .updateOrderStatus(orderDTO.getId(), OrderStatus.DELIVERED, "Delivery process completed for order");
     }
 
     @Test
@@ -53,7 +53,7 @@ class OrderProcessingListenerTest {
         orderProcessingListener.handleNewOrder(orderDTO);
 
         verify(orderServiceClient, times(1))
-                .updateOrderStatus(orderDTO.getId(), OrderStatus.DELIVERY_FAILED);
+                .updateOrderStatus(orderDTO.getId(), OrderStatus.DELIVERY_FAILED, "Failed to process delivery for order");
         verify(kafkaTemplate, times(1)).send(isNull(), anyString(), any(OrderDTO.class));
     }
 }

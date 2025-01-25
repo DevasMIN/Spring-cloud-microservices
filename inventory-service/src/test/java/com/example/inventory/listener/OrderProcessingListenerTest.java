@@ -51,7 +51,7 @@ class OrderProcessingListenerTest {
         // Assert
         verify(inventoryService, times(1)).processInventory(orderDTO);
         verify(orderServiceClient, times(1))
-                .updateOrderStatus(orderDTO.getId(), OrderStatus.INVENTORY_DONE);
+                .updateOrderStatus(orderDTO.getId(), OrderStatus.INVENTORY_DONE, "Inventory reserved successfully");
         verify(kafkaTemplate, times(1)).send(eq("inventory-reserved"), eq("1"), eq(orderDTO));
     }
 
@@ -68,7 +68,7 @@ class OrderProcessingListenerTest {
 
         // Assert
         verify(orderServiceClient, times(1))
-                .updateOrderStatus(orderDTO.getId(), OrderStatus.UNEXPECTED_FAILURE);
+                .updateOrderStatus(orderDTO.getId(), OrderStatus.UNEXPECTED_FAILURE, "Error processing inventory for order: 1. Error: Inventory error");
         verify(kafkaTemplate, times(1)).send(eq("inventory-failed"), eq("1"), eq(orderDTO));
     }
 }

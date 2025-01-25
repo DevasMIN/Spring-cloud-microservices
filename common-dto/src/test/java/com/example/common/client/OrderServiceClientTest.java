@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -47,14 +50,21 @@ class OrderServiceClientTest {
     void testUpdateOrderStatus_Success() {
         Long orderId = 1L;
         OrderStatus status = OrderStatus.COMPLETED;
+        String message = "Order status updated";
 
-        orderServiceClient.updateOrderStatus(orderId, status);
+        orderServiceClient.updateOrderStatus(orderId, status, message);
 
         String expectedUrl = orderServiceUrl + "/api/orders/" + orderId;
         verify(restTemplate, times(1)).exchange(
                 eq(expectedUrl),
                 eq(HttpMethod.PATCH),
-                argThat(entity -> entity.getBody() == status),
+                argThat(entity -> {
+                    Object body = entity.getBody();
+                    if (body instanceof Map<?, ?> bodyMap) {
+                        return status.equals(bodyMap.get("status")) && message.equals(bodyMap.get("comment"));
+                    }
+                    return false;
+                }),
                 eq(Void.class)
         );
     }
@@ -63,25 +73,28 @@ class OrderServiceClientTest {
     void testUpdateOrderStatus_Failure() {
         Long orderId = 2L;
         OrderStatus status = OrderStatus.UNEXPECTED_FAILURE;
+        String message = "Some error happened";
 
         String expectedUrl = orderServiceUrl + "/api/orders/" + orderId;
 
+        // Настраиваем restTemplate на выброс исключения
         doThrow(new RuntimeException("Service unavailable"))
                 .when(restTemplate)
                 .exchange(eq(expectedUrl), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Void.class));
 
-        try {
-            orderServiceClient.updateOrderStatus(orderId, status);
-        } catch (RuntimeException e) {
-            // Ожидаем выброс исключения
-        }
+        // Ожидаем выброс исключения
+        assertThrows(RuntimeException.class, () -> orderServiceClient.updateOrderStatus(orderId, status, message));
 
+        // Проверяем, что exchange был вызван с правильными аргументами
         verify(restTemplate, times(1)).exchange(
                 eq(expectedUrl),
                 eq(HttpMethod.PATCH),
                 argThat(entity -> {
-                    // Проверяем, что тело запроса содержит статус
-                    return entity.getBody() == status;
+                    Object body = entity.getBody();
+                    if (body instanceof Map<?, ?> bodyMap ) {
+                        return status.equals(bodyMap.get("status")) && message.equals(bodyMap.get("comment"));
+                    }
+                    return false;
                 }),
                 eq(Void.class)
         );

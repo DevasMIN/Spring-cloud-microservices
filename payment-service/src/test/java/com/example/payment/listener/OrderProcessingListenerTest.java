@@ -38,7 +38,8 @@ class OrderProcessingListenerTest {
 
         orderProcessingListener.handleNewOrder(orderDTO);
 
-        verify(orderServiceClient, times(1)).updateOrderStatus(1L, OrderStatus.PAID);
+        verify(orderServiceClient, times(1))
+                .updateOrderStatus(1L, OrderStatus.PAID, "Payment successful for order");
         verify(kafkaTemplate, times(1)).send(isNull(), anyString(), eq(orderDTO));
     }
 
@@ -50,7 +51,8 @@ class OrderProcessingListenerTest {
 
         orderProcessingListener.handleNewOrder(orderDTO);
 
-        verify(orderServiceClient, times(1)).updateOrderStatus(1L, OrderStatus.PAYMENT_FAILED);
+        verify(orderServiceClient, times(1))
+                .updateOrderStatus(1L, OrderStatus.PAYMENT_FAILED, "Payment failed for order");
         verify(kafkaTemplate, times(1)).send(isNull(), anyString(), eq(orderDTO));
     }
 }

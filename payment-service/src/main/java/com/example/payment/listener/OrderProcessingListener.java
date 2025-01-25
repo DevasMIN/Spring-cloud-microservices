@@ -44,7 +44,8 @@ public class OrderProcessingListener {
                     orderDTO.setStatus(OrderStatus.PAID);
                     orderServiceClient.updateOrderStatus(
                         orderDTO.getId(),
-                        OrderStatus.PAID
+                        OrderStatus.PAID,
+                        "Payment successful for order"
                     );
                     kafkaTemplate.send(paymentSuccess, orderDTO.getId().toString(), orderDTO);
                     log.info("Payment successful for order: {}, proceeding to inventory", orderDTO.getId());
@@ -52,7 +53,8 @@ public class OrderProcessingListener {
                     orderDTO.setStatus(OrderStatus.PAYMENT_FAILED);
                     orderServiceClient.updateOrderStatus(
                         orderDTO.getId(),
-                        OrderStatus.PAYMENT_FAILED
+                        OrderStatus.PAYMENT_FAILED,
+                            "Payment failed for order"
                     );
                     log.error("Payment failed for order: {} - insufficient funds", orderDTO.getId());
                     kafkaTemplate.send(paymentFailed, orderDTO.getId().toString(), orderDTO);
@@ -61,11 +63,15 @@ public class OrderProcessingListener {
                 log.warn("Order {} is not in REGISTERED status. Current status: {}", orderDTO.getId(), orderDTO.getStatus());
             }
         } catch (Exception e) {
-            log.error("Error processing payment for order: {}. Error: {}", orderDTO.getId(), e.getMessage(), e);
+            String errorMessage = String.format("Error processing payment for order: %s. Error: %s",
+                    orderDTO.getId(),
+                    e.getMessage());
+            log.error(errorMessage);
             orderDTO.setStatus(OrderStatus.UNEXPECTED_FAILURE);
             orderServiceClient.updateOrderStatus(
                 orderDTO.getId(),
-                OrderStatus.UNEXPECTED_FAILURE
+                OrderStatus.UNEXPECTED_FAILURE,
+                errorMessage
             );
             kafkaTemplate.send(paymentFailed, orderDTO.getId().toString(), orderDTO);
         }
