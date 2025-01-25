@@ -4,13 +4,9 @@ server:
 spring:
   application:
     name: inventory-service
-  config:
-    import: "configserver:http://localhost:8888"
   cloud:
     config:
-      username: config-server
-      password: configpassword
-      fail-fast: true
+      enabled: false
   datasource:
     url: jdbc:postgresql://localhost:5432/inventory_db
     username: postgres
@@ -28,14 +24,22 @@ spring:
     consumer:
       group-id: inventory-service-group
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.example.common.dto"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: "com.example.common.dto.OrderDTO"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  cache:
+    type: redis
   redis:
     host: localhost
     port: 6379
     password: redis_password
-    cache:
-      type: redis
-      redis:
-        time-to-live: 3600000
+    timeout: 60000
 
 eureka:
   client:
@@ -44,8 +48,42 @@ eureka:
   instance:
     prefer-ip-address: true
 
-logging:
-  level:
-    root: INFO
-    com.example.inventory: DEBUG
-    org.springframework: INFO
+gateway:
+  url: ${GATEWAY_URL:http://localhost:8080}
+
+app:
+  order-service:
+    url: ${gateway.url}
+
+kafka:
+  topics:
+    order-created: order-created
+    payment-success: payment-success
+    payment-failed: payment-failed
+    inventory-reserved: inventory-reserved
+    inventory-failed: inventory-failed
+    delivery-result: delivery-result
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+resilience4j:
+  ratelimiter:
+    instances:
+      default:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 3s
+
+jwt:
+  secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
+  expiration: 3600000 # 1 hour

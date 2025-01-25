@@ -4,13 +4,23 @@ server:
 spring:
   application:
     name: delivery-service
-  config:
-    import: "configserver:http://localhost:8888"
   cloud:
     config:
-      username: config-server
-      password: configpassword
-      fail-fast: true
+      enabled: false
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      group-id: delivery-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.example.common.dto"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: "com.example.common.dto.OrderDTO"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   datasource:
     url: jdbc:postgresql://localhost:5432/delivery_db
     username: postgres
@@ -18,16 +28,38 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: true
-  kafka:
-    bootstrap-servers: localhost:29092
-    consumer:
-      group-id: delivery-service-group
-      auto-offset-reset: earliest
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  order-service:
+    url: ${gateway.url}
+  delivery:
+    success-rate: 0.85
+
+gateway:
+  url: ${GATEWAY_URL:http://localhost:8080}
+
+api:
+  auth: ${gateway.url}/api/auth
+  users: ${gateway.url}/api/users
+  inventory: ${gateway.url}/api/inventory
+  order: ${gateway.url}/api/orders
+  payment: ${gateway.url}/api/payments
+  delivery: ${gateway.url}/api/delivery
+  balance: ${gateway.url}/api/balances
+
+kafka:
+  topics:
+    order-created: order-created
+    payment-success: payment-success
+    payment-failed: payment-failed
+    inventory-reserved: inventory-reserved
+    inventory-failed: inventory-failed
+    delivery-result: delivery-result
 
 eureka:
   client:
@@ -36,8 +68,26 @@ eureka:
   instance:
     prefer-ip-address: true
 
-logging:
-  level:
-    root: INFO
-    com.example.delivery: DEBUG
-    org.springframework: INFO
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+resilience4j:
+  ratelimiter:
+    instances:
+      default:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 3s
+
+jwt:
+  secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
+  expiration: 3600000

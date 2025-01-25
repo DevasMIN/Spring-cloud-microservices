@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -46,9 +47,10 @@ public class OrderController {
     })
     public ResponseEntity<Order> updateOrderStatus(
             @PathVariable @NotNull Long orderId,
-            @RequestBody @NotNull OrderStatus status,
-            String comment
+            @RequestBody Map<String, Object> updateRequest
     ) {
+        OrderStatus status = OrderStatus.valueOf(updateRequest.get("status").toString());
+        String comment = updateRequest.get("comment") != null ? updateRequest.get("comment").toString() : null;
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status, comment));
     }
 

@@ -113,9 +113,10 @@ class FullCycleTest {
         await()
             .atMost(50, TimeUnit.SECONDS)
             .until(() -> "INVENTORY_FAILED".equals(orderService.getOrderStatus(orderId2, token2)));
-        
-        // Verify balance was not deducted for failed order
-        assertEquals(new BigDecimal("500"), balanceService.getUserBalance(userId2, token2));
+
+        await()
+            .atMost(30, TimeUnit.SECONDS)
+            .until(() -> new BigDecimal("500").equals(balanceService.getUserBalance(userId2, token2)));
     }
 
     @Test

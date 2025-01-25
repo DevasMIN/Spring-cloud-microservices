@@ -3,6 +3,7 @@ package com.example.inventory.listener;
 import com.example.common.client.OrderServiceClient;
 import com.example.common.dto.OrderDTO;
 import com.example.common.enums.OrderStatus;
+import com.example.inventory.exception.ItemNotFoundException;
 import com.example.inventory.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,29 +35,30 @@ public class OrderProcessingListener {
         try {
             if (orderDTO.getStatus() == OrderStatus.PAID) {
                 boolean success = inventoryService.processInventory(orderDTO);
-                
+
                 if (success) {
                     orderDTO.setStatus(OrderStatus.INVENTORY_DONE);
                     orderServiceClient.updateOrderStatus(
                         orderDTO.getId(),
                         OrderStatus.INVENTORY_DONE,
-                "Inventory reserved successfully"
+                        "Inventory reserved successfully"
                     );
                     log.info("Inventory reserved successfully for order: {}, proceeding to delivery", orderDTO.getId());
                     kafkaTemplate.send(inventoryReservedTopic, orderDTO.getId().toString(), orderDTO);
-                } else {
-                    orderDTO.setStatus(OrderStatus.INVENTORY_FAILED);
-                    orderServiceClient.updateOrderStatus(
-                        orderDTO.getId(),
-                        OrderStatus.INVENTORY_FAILED,
-                        "Inventory reservation failed"
-                    );
-                    log.error("Inventory reservation failed for order: {} - insufficient stock", orderDTO.getId());
-                    kafkaTemplate.send(inventoryFailedTopic, orderDTO.getId().toString(), orderDTO);
                 }
+
             } else {
                 log.warn("Order {} is not in PAID status. Current status: {}", orderDTO.getId(), orderDTO.getStatus());
             }
+
+        } catch (ItemNotFoundException e) {
+            log.error("Item not found for order: {}. Error: {}", orderDTO.getId(), e.getMessage());
+            orderServiceClient.updateOrderStatus(
+                    orderDTO.getId(),
+                    OrderStatus.INVENTORY_FAILED,
+                    "Inventory reservation failed - " + e.getMessage()
+            );
+            kafkaTemplate.send(inventoryFailedTopic, orderDTO.getId().toString(), orderDTO);
         } catch (Exception e) {
             String errorMessage = String.format("Error processing inventory for order: %s. Error: %s",
                     orderDTO.getId(),
@@ -67,7 +69,7 @@ public class OrderProcessingListener {
             orderServiceClient.updateOrderStatus(
                 orderDTO.getId(),
                 OrderStatus.UNEXPECTED_FAILURE,
-                    errorMessage
+                errorMessage
             );
             kafkaTemplate.send(inventoryFailedTopic, orderDTO.getId().toString(), orderDTO);
         }

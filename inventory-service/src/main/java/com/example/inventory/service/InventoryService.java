@@ -9,7 +9,6 @@ import com.example.inventory.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +21,6 @@ import java.util.List;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
-    private final KafkaTemplate<String, OrderDTO> kafkaTemplate;
 
     @Value("${kafka.topics.inventory-reserved}")
     private String inventoryReservedTopic;
@@ -53,7 +51,7 @@ public class InventoryService {
             if (!missingProducts.isEmpty()) {
                 log.error("Products not available for order {}: {}", orderDTO.getId(), missingProducts);
                 orderDTO.setStatus(OrderStatus.INVENTORY_FAILED); // Обновляем статус заказа
-                throw new ItemNotFoundException("Products not available: " + missingProducts); // Выбрасываем исключение
+                return false;
             }
 
             // Обновляем количество товаров

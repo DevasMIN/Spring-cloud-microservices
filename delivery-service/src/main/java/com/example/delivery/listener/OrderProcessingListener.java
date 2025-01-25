@@ -36,10 +36,14 @@ public class OrderProcessingListener {
         try {
             deliveryService.processDelivery(orderDTO);
 
+            String statusMessage = orderDTO.getStatus() == OrderStatus.DELIVERED 
+                ? "Order successfully delivered" 
+                : "Delivery failed";
+
             orderServiceClient.updateOrderStatus(
                 orderDTO.getId(),
                 orderDTO.getStatus(),
-                    "Delivery process completed for order"
+                statusMessage
             );
             log.info("Delivery process completed for order: {}, status: {}", 
                     orderDTO.getId(), orderDTO.getStatus());
@@ -49,7 +53,7 @@ public class OrderProcessingListener {
             orderServiceClient.updateOrderStatus(
                 orderDTO.getId(),
                 OrderStatus.DELIVERY_FAILED,
-                    "Failed to process delivery for order"
+                "Failed to process delivery: " + e.getMessage()
             );
             kafkaTemplate.send(deliveryResult, orderDTO.getId().toString(), orderDTO);
         }

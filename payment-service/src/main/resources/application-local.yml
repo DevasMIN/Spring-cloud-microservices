@@ -4,11 +4,9 @@ server:
 spring:
   application:
     name: payment-service
-  config:
-    import: "optional:configserver:http://localhost:8888"
   cloud:
     config:
-      fail-fast: false
+      enabled: false
   datasource:
     url: jdbc:postgresql://localhost:5432/payment_db
     username: postgres
@@ -26,6 +24,39 @@ spring:
     consumer:
       group-id: payment-group
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.example.common.dto"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: "com.example.common.dto.OrderDTO"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+kafka:
+  topics:
+    order-created: order-created
+    payment-success: payment-success
+    payment-failed: payment-failed
+    inventory-failed: inventory-failed
+    delivery-result: delivery-result
+
+gateway:
+  url: ${GATEWAY_URL:http://localhost:8080}
+
+api:
+  auth: ${gateway.url}/api/auth
+  users: ${gateway.url}/api/users
+  inventory: ${gateway.url}/api/inventory
+  order: ${gateway.url}/api/orders
+  payment: ${gateway.url}/api/payments
+  delivery: ${gateway.url}/api/delivery
+  balance: ${gateway.url}/api/balances
+
+app:
+  order-service:
+    url: http://localhost:8082
 
 eureka:
   client:
@@ -39,3 +70,7 @@ logging:
     root: INFO
     com.example.payment: DEBUG
     org.springframework: INFO
+
+jwt:
+  secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
+  expiration: 3600000 # 1 hour

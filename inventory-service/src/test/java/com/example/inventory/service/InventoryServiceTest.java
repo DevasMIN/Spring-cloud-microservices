@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -28,9 +27,6 @@ class InventoryServiceTest {
 
     @Mock
     private InventoryRepository inventoryRepository;
-
-    @Mock
-    private KafkaTemplate<String, OrderDTO> kafkaTemplate;
 
     @InjectMocks
     private InventoryService inventoryService;
@@ -62,11 +58,11 @@ class InventoryServiceTest {
         when(inventoryRepository.findById(100L)).thenReturn(Optional.of(inventoryItem));
 
         // Выполняем тестируемый метод
-        inventoryService.processInventory(orderDTO);
+        boolean result = inventoryService.processInventory(orderDTO);
 
-        // Проверяем, что кол-во товара уменьшилось
+        // Проверяем результат
+        assertTrue(result);
         verify(inventoryRepository).save(argThat(inv -> inv.getId().equals(100L) && inv.getQuantity() == 8));
-
     }
 
     @Test
@@ -85,13 +81,12 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById(200L)).thenReturn(Optional.empty());
 
-        // Проверяем, что выбросится исключение
-        assertThrows(ItemNotFoundException.class, () -> inventoryService.processInventory(orderDTO));
-
-        // Проверяем, что статус заказа сменился на INVENTORY_FAILED
+        // Проверяем результат
+        boolean result = inventoryService.processInventory(orderDTO);
+        
+        // Проверяем, что метод вернул false и статус заказа изменился
+        assertFalse(result);
         assertEquals(OrderStatus.INVENTORY_FAILED, orderDTO.getStatus());
-
-
     }
 
     @Test
@@ -114,8 +109,11 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById(300L)).thenReturn(Optional.of(inventoryItem));
 
-        // Проверяем, что выбросится исключение из-за нехватки товара
-        assertThrows(ItemNotFoundException.class, () -> inventoryService.processInventory(orderDTO));
+        // Проверяем результат
+        boolean result = inventoryService.processInventory(orderDTO);
+        
+        // Проверяем, что метод вернул false и статус заказа изменился
+        assertFalse(result);
         assertEquals(OrderStatus.INVENTORY_FAILED, orderDTO.getStatus());
     }
 
