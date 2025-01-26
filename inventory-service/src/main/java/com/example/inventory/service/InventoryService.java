@@ -2,7 +2,6 @@ package com.example.inventory.service;
 
 import com.example.common.dto.OrderDTO;
 import com.example.common.dto.OrderItemDTO;
-import com.example.common.enums.OrderStatus;
 import com.example.inventory.exception.ItemNotFoundException;
 import com.example.inventory.model.InventoryItem;
 import com.example.inventory.repository.InventoryRepository;
@@ -49,8 +48,7 @@ public class InventoryService {
             }
 
             if (!missingProducts.isEmpty()) {
-                log.error("Products not available for order {}: {}", orderDTO.getId(), missingProducts);
-                orderDTO.setStatus(OrderStatus.INVENTORY_FAILED); // Обновляем статус заказа
+                log.error("Products not available for order {}: {}", orderDTO.getId(), missingProducts);// Обновляем статус заказа
                 return false;
             }
 

@@ -45,6 +45,15 @@ public class OrderProcessingListener {
                     );
                     log.info("Inventory reserved successfully for order: {}, proceeding to delivery", orderDTO.getId());
                     kafkaTemplate.send(inventoryReservedTopic, orderDTO.getId().toString(), orderDTO);
+                } else {
+                    orderDTO.setStatus(OrderStatus.INVENTORY_FAILED);
+                    orderServiceClient.updateOrderStatus(
+                            orderDTO.getId(),
+                            OrderStatus.INVENTORY_FAILED,
+                            "Inventory reservation failed - insufficient stock"
+                    );
+                    log.error("Inventory reservation failed for order: {} - insufficient stock", orderDTO.getId());
+                    kafkaTemplate.send(inventoryFailedTopic, orderDTO.getId().toString(), orderDTO);
                 }
 
             } else {
