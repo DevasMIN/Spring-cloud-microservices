@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
     permissions:
@@ -26,11 +26,8 @@ jobs:
       with:
         gradle-version: '7.6.1'
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build
-
     - name: Run Tests with Gradle
-      run: ./gradlew test
+      run: gradle test
 
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
