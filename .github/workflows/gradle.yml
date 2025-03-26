@@ -21,17 +21,6 @@ jobs:
   build:
     needs: prepare
     runs-on: ubuntu-latest
-    services:
-      docker:
-        image: docker:24.0.5-dind
-        options: >-
-          --privileged
-          -e DOCKER_TLS_CERTDIR=/certs
-        ports:
-          - 2376:2376
-        volumes:
-          - /certs:/certs
-
     strategy:
       matrix:
         module: ${{ fromJson(needs.prepare.outputs.modules) }}
@@ -55,21 +44,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Verify Docker
-        run: |
-          docker ps
-          docker version
-
       - name: Build Module ${{ matrix.module }}
         run: ./gradlew :${{ matrix.module }}:build
 
-      - name: Test Module with Docker Support
+      - name: Test Module ${{ matrix.module }}
         run: ./gradlew :${{ matrix.module }}:test
-        env:
-          TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE: /var/run/docker.sock
 
   summary:
     needs: [prepare, build]
