@@ -26,13 +26,17 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Configure Testcontainers
+      - name: Configure environment
         run: |
+          echo "DOCKER_HOST=tcp://127.0.0.1:2376" >> $GITHUB_ENV
+          echo "DOCKER_TLS_VERIFY=1" >> $GITHUB_ENV
+          echo "DOCKER_CERT_PATH=/certs/client" >> $GITHUB_ENV
           echo "TESTCONTAINERS_RYUK_DISABLED=true" >> $GITHUB_ENV
-          echo "DOCKER_HOST=tcp://docker:2375" >> $GITHUB_ENV
 
       - name: Verify Docker
-        run: docker info
+        run: |
+          docker version
+          docker info
 
       - name: Build and Test
         run: |
