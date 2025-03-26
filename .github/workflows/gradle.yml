@@ -9,11 +9,6 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        module: [
-          'auth-service'
-        ]
     services:
       docker:
         image: docker:dind
@@ -36,14 +31,7 @@ jobs:
           docker ps
           docker version
 
-      - name: Build ${{ matrix.module }}
-        run: gradle :${{ matrix.module }}:build -x test --info
-
-      - name: Run tests for ${{ matrix.module }}
-        run: gradle :${{ matrix.module }}:test --info
-
-      - name: Upload test reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-report-${{ matrix.module }}
-          path: ${{ github.workspace }}/${{ matrix.module }}/build/reports/tests/test
+      - name: Build and Test All
+        run: |
+          gradle build
+          gradle test
