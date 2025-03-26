@@ -30,5 +30,10 @@ subprojects {
 
     test {
         useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+        maxParallelForks = 1
+        forkEvery = 0
     }
 }
