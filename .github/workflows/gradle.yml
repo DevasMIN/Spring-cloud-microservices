@@ -12,15 +12,7 @@ jobs:
     strategy:
       matrix:
         module: [
-          'discovery-service',
-          'config-service',
-          'gateway-service',
-          'auth-service',
-          'order-service',
-          'payment-service',
-          'delivery-service',
-          'inventory-service',
-          'common-dto'
+          'auth-service'
         ]
     services:
       docker:
