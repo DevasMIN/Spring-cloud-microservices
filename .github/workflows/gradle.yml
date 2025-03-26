@@ -7,8 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  test:
-
+  build-and-test:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,8 +25,29 @@ jobs:
       with:
         gradle-version: '7.6.1'
 
-    - name: Build with Gradle Wrapper
-      run: gradle build
+    - name: Build project
+      run: gradle build -x bootJar
 
-    - name: Run Tests with Gradle
-      run: gradle test
+    - name: Build service JARs
+      run: |
+        gradle :discovery-service:bootJar
+        gradle :config-service:bootJar
+        gradle :gateway-service:bootJar
+        gradle :auth-service:bootJar
+        gradle :order-service:bootJar
+        gradle :payment-service:bootJar
+        gradle :delivery-service:bootJar
+        gradle :inventory-service:bootJar
+
+    - name: Run tests
+      run: |
+        gradle :discovery-service:test
+        gradle :config-service:test
+        gradle :gateway-service:test
+        gradle :auth-service:test
+        gradle :order-service:test
+        gradle :payment-service:test
+        gradle :delivery-service:test
+        gradle :inventory-service:test
+        gradle :common-dto:test
+        gradle :integration-test:test
