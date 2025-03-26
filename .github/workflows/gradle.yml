@@ -9,6 +9,19 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [
+          'discovery-service',
+          'config-service',
+          'gateway-service',
+          'auth-service',
+          'order-service',
+          'payment-service',
+          'delivery-service',
+          'inventory-service',
+          'common-dto'
+        ]
     services:
       docker:
         image: docker:dind
@@ -31,7 +44,14 @@ jobs:
           docker ps
           docker version
 
-      - name: Build and Test
-        run: |
-          gradle :auth-service:build --info
-          gradle :auth-service:test --info
+      - name: Build ${{ matrix.module }}
+        run: gradle :${{ matrix.module }}:build -x test --info
+
+      - name: Run tests for ${{ matrix.module }}
+        run: gradle :${{ matrix.module }}:test --info
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report-${{ matrix.module }}
+          path: ${{ github.workspace }}/${{ matrix.module }}/build/reports/tests/test
