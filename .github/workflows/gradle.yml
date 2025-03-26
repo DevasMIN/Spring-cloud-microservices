@@ -30,9 +30,9 @@ jobs:
           endpoint: tcp://docker:2375
           install: true
 
-      - name: Configure Testcontainers
+      - name: Setup Docker environment
         run: |
-          echo "DOCKER_HOST=tcp://docker:2375" >> $GITHUB_ENV
+          echo "DOCKER_HOST=tcp://127.0.0.1:2375" >> $GITHUB_ENV
           echo "TESTCONTAINERS_RYUK_DISABLED=true" >> $GITHUB_ENV
           echo "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock" >> $GITHUB_ENV
 
