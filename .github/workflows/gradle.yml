@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Build and Test Auth Service
 
 on:
   push:
@@ -14,22 +14,6 @@ jobs:
         image: docker:dind
         options: --privileged
 
-    strategy:
-      matrix:
-        module: [
-          'discovery-service',
-          'config-service',
-          'gateway-service',
-          'auth-service',
-          'order-service',
-          'payment-service',
-          'delivery-service',
-          'inventory-service',
-          'common-dto'
-        ]
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -38,41 +22,19 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          check-latest: true
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: '7.6.1'
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Enable Testcontainers
+      - name: Configure Testcontainers
         run: |
           echo "TESTCONTAINERS_RYUK_DISABLED=true" >> $GITHUB_ENV
           echo "DOCKER_HOST=tcp://docker:2375" >> $GITHUB_ENV
-          echo "GRADLE_OPTS=-Dorg.gradle.daemon=false" >> $GITHUB_ENV
 
       - name: Verify Docker
         run: docker info
 
-      - name: Build ${{ matrix.module }}
+      - name: Build and Test
         run: |
-          if [[ "${{ matrix.module }}" != "common-dto" ]]; then
-            gradle :${{ matrix.module }}:bootJar
-          else
-            gradle :${{ matrix.module }}:build
-          fi
-
-      - name: Run tests for ${{ matrix.module }}
-        timeout-minutes: 10
-        run: gradle :${{ matrix.module }}:test --info
-        continue-on-error: true
-
-      - name: Upload test reports
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-report-${{ matrix.module }}
-          path: ${{ github.workspace }}/${{ matrix.module }}/build/reports/tests/test
+          gradle :auth-service:build --info
+          gradle :auth-service:test --info
