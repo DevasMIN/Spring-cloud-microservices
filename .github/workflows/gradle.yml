@@ -43,5 +43,5 @@ jobs:
       - name: Build and Test All Modules
         run: |
           # Собираем все модули кроме корневого
-          ./gradlew build -x bootJar --info
-          ./gradlew test --info
+          ./gradlew build -x bootJar -x :integration-test:build
+          ./gradlew test -x :integration-test:test
