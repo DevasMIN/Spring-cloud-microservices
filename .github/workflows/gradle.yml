@@ -7,12 +7,24 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build-and-test:
+  prepare:
     runs-on: ubuntu-latest
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
+    outputs:
+      modules: ${{ steps.set-modules.outputs.modules }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-modules
+        run: |
+          MODULES=$(grep "include '" settings.gradle | sed -e "s/include '\(.*\)'/\1/g" | grep -v "integration-test" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "modules=$MODULES" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: ${{ fromJson(needs.prepare.outputs.modules) }}
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
@@ -32,16 +44,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
+      - name: Build Module ${{ matrix.module }}
+        run: ./gradlew :${{ matrix.module }}:build
 
-      - name: Verify Docker
-        run: |
-          docker ps
-          docker version
+      - name: Test Module ${{ matrix.module }}
+        run: ./gradlew :${{ matrix.module }}:tes
 
-      - name: Build and Test All Modules
-        run: |
-          # Собираем все модули кроме корневого
-          ./gradlew build -x bootJar -x :integration-test:build
-          ./gradlew test -x :integration-test:test
+  summary:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check build status
+        if: needs.build.result == 'failure'
+        run: exit 1
