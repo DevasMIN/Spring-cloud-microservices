@@ -48,7 +48,7 @@ public class InventoryService {
             }
 
             if (!missingProducts.isEmpty()) {
-                log.error("Products not available for order {}: {}", orderDTO.getId(), missingProducts);// Обновляем статус заказа
+                log.error("Products not available for order {}: {}", orderDTO.getId(), missingProducts);
                 return false;
             }
 

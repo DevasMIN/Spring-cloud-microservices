@@ -54,7 +54,7 @@ class OrderControllerTest {
 
         mockMvc.perform(patch("/api/orders/{orderId}", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(newStatus)))
+                .content("{\"status\": \"" + newStatus.name() + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(orderId))
                 .andExpect(jsonPath("$.status").value(newStatus.toString()));

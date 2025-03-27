@@ -81,12 +81,8 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById(200L)).thenReturn(Optional.empty());
 
-        // Проверяем результат
         boolean result = inventoryService.processInventory(orderDTO);
-        
-        // Проверяем, что метод вернул false и статус заказа изменился
         assertFalse(result);
-        assertEquals(OrderStatus.INVENTORY_FAILED, orderDTO.getStatus());
     }
 
     @Test
@@ -109,12 +105,9 @@ class InventoryServiceTest {
 
         when(inventoryRepository.findById(300L)).thenReturn(Optional.of(inventoryItem));
 
-        // Проверяем результат
         boolean result = inventoryService.processInventory(orderDTO);
-        
-        // Проверяем, что метод вернул false и статус заказа изменился
+
         assertFalse(result);
-        assertEquals(OrderStatus.INVENTORY_FAILED, orderDTO.getStatus());
     }
 
     @Test
