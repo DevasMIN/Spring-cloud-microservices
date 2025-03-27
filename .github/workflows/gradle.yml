@@ -18,7 +18,7 @@ jobs:
           MODULES=$(grep "include '" settings.gradle | sed -e "s/include '\(.*\)'/\1/g" | grep -v "integration-test" | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "modules=$MODULES" >> $GITHUB_OUTPUT
 
-  build:
+  build and test:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
