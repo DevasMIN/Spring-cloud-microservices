@@ -50,8 +50,39 @@ jobs:
       - name: Test Module ${{ matrix.module }}
         run: ./gradlew :${{ matrix.module }}:test
 
+
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Setup Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Start Services
+        run: |
+          docker-compose up -d
+
+      - name: Run Integration Tests
+        run: ./gradlew :integration-test:test
+
+      - name: Stop Services
+        if: always()
+        run: docker-compose down
+
+
   summary:
-    needs: [prepare, build]
+    needs: [ prepare, build ]
     runs-on: ubuntu-latest
     if: always()
     steps:
