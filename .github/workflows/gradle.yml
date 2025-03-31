@@ -99,7 +99,7 @@ jobs:
 
       - name: Start Services
         run: |
-          docker-compose up -d
+          docker compose up -d
           sleep 60
 
       - name: Run Integration Tests
