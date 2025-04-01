@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="1" author="system" runInTransaction="false">
+        <sql>
+            CREATE DATABASE auth_db;
+            CREATE DATABASE order_db;
+            CREATE DATABASE payment_db;
+            CREATE DATABASE inventory_db;
+            CREATE DATABASE delivery_db;
+        </sql>
+        <rollback>
+            DROP DATABASE IF EXISTS auth_db;
+            DROP DATABASE IF EXISTS order_db;
+            DROP DATABASE IF EXISTS payment_db;
+            DROP DATABASE IF EXISTS inventory_db;
+            DROP DATABASE IF EXISTS delivery_db;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

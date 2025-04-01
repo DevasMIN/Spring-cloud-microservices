@@ -2,6 +2,7 @@ plugins {
     id 'org.springframework.boot' version '3.2.0'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java'
+    id 'org.liquibase.gradle' version '2.2.0'
 }
 
 allprojects {
@@ -30,5 +31,17 @@ subprojects {
 
     test {
         useJUnitPlatform()
+    }
+}
+
+// Конфигурация Liquibase
+liquibase {
+    activities {
+        main {
+            changeLogFile 'init-scripts/liquibase/db.changelog-master.xml'
+            url 'jdbc:postgresql://localhost:5432/postgres'
+            username 'postgres'
+            password 'postgres'
+        }
     }
 }

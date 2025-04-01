@@ -6,14 +6,23 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
-    volumes:
-      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - logistics-network
+
+  liquibase:
+    image: liquibase/liquibase:latest
+    volumes:
+      - ./liquibase:/liquibase/project
+    command: --url=jdbc:postgresql://postgres:5432/postgres --username=postgres --password=postgres --changelog-file=project/db.changelog-master.xml update
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - logistics-network
 
