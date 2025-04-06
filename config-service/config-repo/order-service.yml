@@ -8,6 +8,8 @@ spring:
     url: jdbc:postgresql://postgres:5432/order_db
     username: postgres
     password: postgres
+    hikari:
+      metrics-enabled: true
   jpa:
     hibernate:
       ddl-auto: update
@@ -26,6 +28,11 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.type.mapping: "order:com.example.order.model.Order"
+  zipkin:
+    base-url: http://zipkin:9411
+  sleuth:
+    sampler:
+      probability: 1.0
 
 eureka:
   client:
@@ -38,10 +45,29 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,metrics,prometheus,info
   endpoint:
     health:
       show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    enable:
+      kafka: true
+      jvm: true
+      http: true
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    propagation:
+      type: B3,W3C
+    baggage:
+      correlation:
+        enabled: true
+        fields: userId,requestId
+    sampling:
+      probability: 1.0
 
 jwt:
   secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
