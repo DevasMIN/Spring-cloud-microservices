@@ -28,11 +28,6 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.type.mapping: "order:com.example.order.model.Order"
-  zipkin:
-    base-url: http://zipkin:9411
-  sleuth:
-    sampler:
-      probability: 1.0
 
 eureka:
   client:
@@ -68,6 +63,10 @@ management:
         fields: userId,requestId
     sampling:
       probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
 
 jwt:
   secret: ${JWT_SECRET:veryverysecretkeyforjwtthatisatleast32byteslong12345}
