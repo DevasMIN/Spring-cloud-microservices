@@ -50,6 +50,14 @@ jobs:
       - name: Test Module ${{ matrix.module }}
         run: ./gradlew :${{ matrix.module }}:test
 
+      - name: Check Code Coverage
+        run: ./gradlew :${{ matrix.module }}:jacocoTestCoverageVerification
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.module }}
+          path: ${{ matrix.module }}/build/reports/jacoco/test/html/
 
   integration-tests:
     needs: build
@@ -85,10 +93,18 @@ jobs:
       - name: Run Integration Tests
         run: ./gradlew :integration-test:test
 
+      - name: Check Integration Test Coverage
+        run: ./gradlew :integration-test:jacocoTestCoverageVerification
+
+      - name: Upload Integration Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage-report
+          path: integration-test/build/reports/jacoco/test/html/
+
       - name: Stop Services
         if: always()
         run: docker-compose down
-
 
   summary:
     needs: integration-tests
