@@ -222,9 +222,7 @@ services:
       - logistics-network
 
   auth-service:
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
+    image: auth-service:latest
     ports:
       - "8081:8081"
     depends_on:
