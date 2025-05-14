@@ -87,6 +87,7 @@ jobs:
 
       - name: Start Services
         run: |
+          ./gradlew jibDockerBuild
           docker-compose up -d
           sleep 60
 

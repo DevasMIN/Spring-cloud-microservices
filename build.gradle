@@ -4,7 +4,6 @@ plugins {
     id 'java'
     id 'org.liquibase.gradle' version '2.2.0'
     id 'jacoco'
-    id 'com.google.cloud.tools.jib' version '3.4.0'
 }
 
 allprojects {
@@ -22,10 +21,9 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
-    apply plugin: 'com.google.cloud.tools.jib'
 
-    sourceCompatibility = '17'
-    targetCompatibility = '17'
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
 
     dependencies {
         compileOnly 'org.projectlombok:lombok'
