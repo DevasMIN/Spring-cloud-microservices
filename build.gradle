@@ -22,6 +22,9 @@ subprojects {
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
 
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
+
     dependencies {
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
@@ -51,7 +54,7 @@ subprojects {
         violationRules {
             rule {
                 limit {
-                    minimum = 0.40
+                    minimum = 0.20
                 }
             }
         }

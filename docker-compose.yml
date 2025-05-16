@@ -199,9 +199,7 @@ services:
       - logistics-network
 
   config-service:
-    build:
-      context: ./config-service
-      dockerfile: Dockerfile
+    image: config-service:latest
     ports:
       - "8888:8888"
     depends_on:
@@ -213,7 +211,7 @@ services:
     volumes:
       - ./config-service/config-repo:/app/config-repo
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://config-server:configpassword@localhost:8888/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://config-server:configpassword@localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -224,7 +222,7 @@ services:
   auth-service:
     image: auth-service:latest
     ports:
-      - "8081:8081"
+      - "8081:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -234,8 +232,18 @@ services:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/auth_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PASSWORD=redis_password
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=config-server
+      - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -244,28 +252,29 @@ services:
       - logistics-network
 
   order-service:
-    build:
-      context: .
-      dockerfile: ./order-service/Dockerfile
+    image: order-service:latest
     ports:
-      - "8082:8082"
+      - "8082:8080"
     depends_on:
       postgres:
         condition: service_healthy
-      config-service:
-        condition: service_healthy
       kafka:
         condition: service_healthy
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_CLOUD_CONFIG_USERNAME: config-server
-      SPRING_CLOUD_CONFIG_PASSWORD: configpassword
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/order_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=config-server
+      - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -274,32 +283,29 @@ services:
       - logistics-network
 
   payment-service:
-    build:
-      context: .
-      dockerfile: ./payment-service/Dockerfile
+    image: payment-service:latest
     ports:
-      - "8083:8083"
+      - "8083:8080"
     depends_on:
-      config-service:
+      postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      postgres:
+      config-service:
+        condition: service_healthy
+      discovery-service:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_APPLICATION_NAME: payment-service
-      SERVER_PORT: 8083
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
-      SPRING_CLOUD_CONFIG_USERNAME: config-server
-      SPRING_CLOUD_CONFIG_PASSWORD: configpassword
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=config-server
+      - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -308,31 +314,29 @@ services:
       - logistics-network
 
   inventory-service:
-    build:
-      context: .
-      dockerfile: ./inventory-service/Dockerfile
+    image: inventory-service:latest
     ports:
-      - "8084:8084"
+      - "8084:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       config-service:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventory_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
-      SPRING_CLOUD_CONFIG_USERNAME: config-server
-      SPRING_CLOUD_CONFIG_PASSWORD: configpassword
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inventory_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=config-server
+      - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -341,31 +345,29 @@ services:
       - logistics-network
 
   delivery-service:
-    build:
-      context: .
-      dockerfile: ./delivery-service/Dockerfile
+    image: delivery-service:latest
     ports:
-      - "8085:8085"
+      - "8085:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       config-service:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/delivery_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
-      SPRING_CLOUD_CONFIG_USERNAME: config-server
-      SPRING_CLOUD_CONFIG_PASSWORD: configpassword
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/delivery_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=config-server
+      - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -374,9 +376,7 @@ services:
       - logistics-network
 
   gateway-service:
-    build:
-      context: ./gateway-service
-      dockerfile: Dockerfile
+    image: gateway-service:latest
     ports:
       - "8080:8080"
     depends_on:
