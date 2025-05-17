@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.0'
     id 'io.spring.dependency-management' version '1.1.4'
-    id 'com.google.cloud.tools.jib' version '3.4.1'
+    id 'com.google.cloud.tools.jib' version '3.4.0'
 }
 
 group = 'com.example'
@@ -30,17 +30,21 @@ dependencyManagement {
 
 jib {
     from {
-        image = 'eclipse-temurin:21-jre-alpine'
+        image = 'eclipse-temurin:21-jre-jammy'
     }
     to {
-        image = "${project.name}:latest"
+        image = 'config-service'
+        tags = ['latest']
     }
     container {
         mainClass = 'com.example.config.ConfigServiceApplication'
         environment = [
-            'SPRING_PROFILES_ACTIVE': 'docker'
+            'SPRING_PROFILES_ACTIVE': 'native',
+            'CONFIG_SERVER_PASSWORD': 'configpassword',
+            'EUREKA_CLIENT_SERVICEURL_DEFAULTZONE': 'http://discovery-service:8761/eureka/'
         ]
         ports = ['8888']
+        volumes = ['/app/config-repo']
         creationTime = 'USE_CURRENT_TIMESTAMP'
     }
 }

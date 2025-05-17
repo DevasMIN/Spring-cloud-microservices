@@ -57,9 +57,13 @@ jib {
     container {
         mainClass = 'com.example.payment.PaymentServiceApplication'
         environment = [
-            'SPRING_PROFILES_ACTIVE': 'docker'
+            'SPRING_PROFILES_ACTIVE': 'docker',
+            'SPRING_CONFIG_IMPORT': 'optional:configserver:http://config-service:8888',
+            'SPRING_CLOUD_CONFIG_URI': 'http://config-service:8888',
+            'SPRING_CLOUD_CONFIG_USERNAME': 'config-server',
+            'SPRING_CLOUD_CONFIG_PASSWORD': 'configpassword'
         ]
-        ports = ['8080']
+        ports = ['8083']
         creationTime = 'USE_CURRENT_TIMESTAMP'
     }
 }

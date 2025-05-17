@@ -184,9 +184,7 @@ services:
       - logistics-network
 
   discovery-service:
-    build:
-      context: ./discovery-service
-      dockerfile: Dockerfile
+    image: discovery-service:latest
     ports:
       - "8761:8761"
     healthcheck:
@@ -205,13 +203,10 @@ services:
     depends_on:
       discovery-service:
         condition: service_healthy
-    environment:
-      - CONFIG_SERVER_PASSWORD=configpassword
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     volumes:
       - ./config-service/config-repo:/app/config-repo
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://config-server:configpassword@localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://config-server:configpassword@localhost:8888/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -222,7 +217,7 @@ services:
   auth-service:
     image: auth-service:latest
     ports:
-      - "8081:8080"
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -243,7 +238,7 @@ services:
       - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -254,7 +249,7 @@ services:
   order-service:
     image: order-service:latest
     ports:
-      - "8082:8080"
+      - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
@@ -274,7 +269,7 @@ services:
       - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -284,8 +279,11 @@ services:
 
   payment-service:
     image: payment-service:latest
+#    build:
+#      context: .
+#      dockerfile: ./payment-service/Dockerfile
     ports:
-      - "8083:8080"
+      - "8083:8083"
     depends_on:
       postgres:
         condition: service_healthy
@@ -296,16 +294,13 @@ services:
       discovery-service:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
       - SPRING_CLOUD_CONFIG_USERNAME=config-server
       - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -316,7 +311,7 @@ services:
   inventory-service:
     image: inventory-service:latest
     ports:
-      - "8084:8080"
+      - "8084:8084"
     depends_on:
       postgres:
         condition: service_healthy
@@ -336,7 +331,7 @@ services:
       - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -347,7 +342,7 @@ services:
   delivery-service:
     image: delivery-service:latest
     ports:
-      - "8085:8080"
+      - "8085:8085"
     depends_on:
       postgres:
         condition: service_healthy
@@ -367,7 +362,7 @@ services:
       - SPRING_CLOUD_CONFIG_PASSWORD=configpassword
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5

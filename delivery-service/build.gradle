@@ -60,7 +60,7 @@ jib {
         environment = [
             'SPRING_PROFILES_ACTIVE': 'docker'
         ]
-        ports = ['8080']
+        ports = ['8085']
         creationTime = 'USE_CURRENT_TIMESTAMP'
     }
 }
