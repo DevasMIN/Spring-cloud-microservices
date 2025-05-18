@@ -29,42 +29,59 @@ public class InventoryService {
 
     @Transactional
     public boolean processInventory(OrderDTO orderDTO) {
-        log.debug("Processing inventory for order: {}", orderDTO.getId());
+        log.info("Starting inventory processing for order: {}", orderDTO.getId());
         List<Long> missingProducts = new ArrayList<>();
 
         try {
             // Проверяем доступность всех товаров
             for (OrderItemDTO item : orderDTO.getItems()) {
+                log.info("Checking availability for product {} in order {}", item.getProductId(), orderDTO.getId());
                 InventoryItem inventoryItem = inventoryRepository.findById(item.getProductId())
                         .orElse(null);
 
+                log.info("Current inventory state for product {}: quantity={}, required={}",
+                        item.getProductId(),
+                        inventoryItem != null ? inventoryItem.getQuantity() : 0,
+                        item.getQuantity());
+
                 if (inventoryItem == null || inventoryItem.getQuantity() < item.getQuantity()) {
                     missingProducts.add(item.getProductId());
-                    log.warn("Product {} not available in required quantity. Required: {}, Available: {}",
+                    log.warn("Insufficient inventory for product {} in order {}. Required: {}, Available: {}",
                             item.getProductId(),
+                            orderDTO.getId(),
                             item.getQuantity(),
                             inventoryItem != null ? inventoryItem.getQuantity() : 0);
                 }
             }
 
             if (!missingProducts.isEmpty()) {
-                log.error("Products not available for order {}: {}", orderDTO.getId(), missingProducts);
+                log.error("Order {} failed: Products not available: {}", orderDTO.getId(), missingProducts);
                 return false;
             }
 
             // Обновляем количество товаров
             for (OrderItemDTO item : orderDTO.getItems()) {
+                log.info("Updating inventory for product {} in order {}", item.getProductId(), orderDTO.getId());
                 InventoryItem inventoryItem = inventoryRepository.findById(item.getProductId())
                         .orElseThrow(() -> new ItemNotFoundException("Product not found: " + item.getProductId()));
 
-                int newQuantity = inventoryItem.getQuantity() - item.getQuantity();
+                int oldQuantity = inventoryItem.getQuantity();
+                int newQuantity = oldQuantity - item.getQuantity();
                 inventoryItem.setQuantity(newQuantity);
-                inventoryRepository.save(inventoryItem);
                 
-                log.debug("Updated inventory for product {}. New quantity: {}", item.getProductId(), newQuantity);
+                log.info("About to save inventory item {} with new quantity {}", item.getProductId(), newQuantity);
+                InventoryItem savedItem = inventoryRepository.save(inventoryItem);
+                log.info("Saved inventory item {} with quantity {}", savedItem.getId(), savedItem.getQuantity());
+                
+                // Проверяем, что изменения сохранились
+                InventoryItem verifyItem = inventoryRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new ItemNotFoundException("Product not found after save: " + item.getProductId()));
+                log.info("Verified inventory item {} quantity: {}", verifyItem.getId(), verifyItem.getQuantity());
             }
 
+            log.info("Starting inventory work emulation for order {}", orderDTO.getId());
             emulateInventoryWork();
+            log.info("Inventory work completed for order {}", orderDTO.getId());
 
             log.info("Inventory successfully reserved for order: {}", orderDTO.getId());
             return true;
@@ -78,19 +95,21 @@ public class InventoryService {
 
     @Transactional
     public void restoreInventory(OrderDTO orderDTO) {
-        log.debug("Restoring inventory for order: {}", orderDTO.getId());
+        log.info("Starting inventory restoration for order: {}", orderDTO.getId());
         
         try {
             for (OrderItemDTO item : orderDTO.getItems()) {
+                log.info("Restoring inventory for product {} in order {}", item.getProductId(), orderDTO.getId());
                 InventoryItem inventoryItem = inventoryRepository.findById(item.getProductId())
                     .orElseThrow(() -> new ItemNotFoundException("Product not found: " + item.getProductId()));
                 
-                // Восстанавливаем количество
-                int newQuantity = inventoryItem.getQuantity() + item.getQuantity();
+                int oldQuantity = inventoryItem.getQuantity();
+                int newQuantity = oldQuantity + item.getQuantity();
                 inventoryItem.setQuantity(newQuantity);
                 inventoryRepository.save(inventoryItem);
                 
-                log.debug("Restored inventory for product {}. New quantity: {}", item.getProductId(), newQuantity);
+                log.info("Inventory restored for product {} in order {}: {} -> {} (change: {})",
+                        item.getProductId(), orderDTO.getId(), oldQuantity, newQuantity, item.getQuantity());
             }
             
             log.info("Successfully restored inventory for order: {}", orderDTO.getId());
@@ -106,8 +125,11 @@ public class InventoryService {
     }
 
     public InventoryItem getInventoryItem(Long itemId) {
-        return inventoryRepository.findById(itemId)
+        log.info("Fetching inventory item: {}", itemId);
+        InventoryItem item = inventoryRepository.findById(itemId)
             .orElseThrow(() -> new ItemNotFoundException("Product not found: " + itemId));
+        log.info("Retrieved inventory item {}: quantity={}", itemId, item.getQuantity());
+        return item;
     }
 
     public List<InventoryItem> getAllInventoryItems() {
@@ -128,7 +150,7 @@ public class InventoryService {
     public InventoryItem updateInventoryItem(Long itemId, InventoryItem item) {
         log.debug("Updating inventory item with itemId: {}", itemId);
         InventoryItem existingItem = inventoryRepository.findById(itemId)
-                .orElseThrow(() -> new ItemNotFoundException("Product not found: " + itemId));
+                .orElseThrow(() -> new ItemNotFoundException("Product not found in test: " + itemId));
 
         existingItem.setSku(item.getSku());
         existingItem.setQuantity(item.getQuantity());
