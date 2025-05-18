@@ -56,6 +56,12 @@ class InventoryServiceTest {
         inventoryItem.setQuantity(10);
 
         when(inventoryRepository.findById(100L)).thenReturn(Optional.of(inventoryItem));
+        
+        // Настраиваем мок для метода save
+        when(inventoryRepository.save(any(InventoryItem.class))).thenAnswer(invocation -> {
+            InventoryItem savedItem = invocation.getArgument(0);
+            return savedItem;
+        });
 
         // Выполняем тестируемый метод
         boolean result = inventoryService.processInventory(orderDTO);
