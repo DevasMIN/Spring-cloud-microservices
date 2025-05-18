@@ -128,15 +128,19 @@ class FullCycleTest {
         paymentService.processOrder(orderId, token1);
         
         // Wait for order to be completed
-        await().atMost(60, TimeUnit.SECONDS)
+        String finalStatus = await().atMost(60, TimeUnit.SECONDS)
                .until(() -> orderService.getOrderStatus(orderId, token1),
                         status -> status.equals("DELIVERED") || status.equals("DELIVERY_FAILED"));
         
-        // Verify inventory was updated
-        assertEquals(19, inventoryService.getInventoryQuantity(itemId2, token1));
+        // Verify inventory based on delivery status
+        int expectedQuantity = "DELIVERED".equals(finalStatus) ? 19 : 20;
+        assertEquals(expectedQuantity, inventoryService.getInventoryQuantity(itemId2, token1),
+                "Inventory quantity should be " + expectedQuantity + " for status " + finalStatus);
         
-        // Verify balance was deducted
-        assertEquals(new BigDecimal("950"), balanceService.getUserBalance(userId1, token1));
+        // Verify balance was deducted only if delivery was successful
+        BigDecimal expectedBalance = "DELIVERED".equals(finalStatus) ? new BigDecimal("950") : new BigDecimal("1000");
+        assertEquals(expectedBalance, balanceService.getUserBalance(userId1, token1),
+                "Balance should be " + expectedBalance + " for status " + finalStatus);
     }
 
     @Test

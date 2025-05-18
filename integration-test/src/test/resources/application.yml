@@ -7,7 +7,12 @@ spring:
 logging:
   level:
     root: INFO
-    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.web.client.RestTemplate: INFO
+    com.example.integration: DEBUG
+    com.example.inventory: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.hibernate.type.descriptor.sql: WARN
 
 # Gateway URL для всех сервисов
 gateway:
